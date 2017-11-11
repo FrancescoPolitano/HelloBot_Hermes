@@ -463,6 +463,8 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
                 repeatState(p, input=text, location=location, contact=contact, photo=photo, document=document,
                             voice=voice)
 
+import rasberry
+
 app = webapp2.WSGIApplication([
     ('/telegram_me', main_telegram.MeHandler),
     ('/telegram_set_webhook', main_telegram.SetWebhookHandler),
@@ -470,6 +472,7 @@ app = webapp2.WSGIApplication([
     ('/telegram_delete_webhook', main_telegram.DeleteWebhook),
     #(key.FACEBOOK_WEBHOOK_PATH, main_fb.WebhookHandler),
     (key.TELEGRAM_WEBHOOK_PATH, main_telegram.WebhookHandler),
+    ('/pi_people', rasberry.PiPeople),
 ], debug=True)
 
 possibles = globals().copy()
