@@ -1,2 +1,8 @@
-
+.DS_Store
 glassfish4/
+
+# python
+*.py[cod]
+key.py
+.idea*
+
