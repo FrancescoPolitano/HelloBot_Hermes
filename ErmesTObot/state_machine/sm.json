@@ -37,10 +37,13 @@
             "input": "PREFERENZE",
             "actions": [
               {
-              "action_type": "CHANGE_STATE",
+              "action_type": "SEND_TEXT",
               "action_params": {
-                "new_state": 3
+                "text": "🏗 Work in progress..."
                 }
+              },
+              {
+              "action_type": "RESTART"
               }
             ]
           },
@@ -92,6 +95,13 @@
                 "action_type": "SEND_TEXT",
                 "action_params": {
                   "text": "mensa_info.getInfoMensa('__user_input__')"
+                }
+              },
+              {
+                "action_type": "SAVE_VAR",
+                "action_params": {
+                  "var_name": "mensa_name",
+                  "var_value": "__user_input__"
                 }
               },
               {
@@ -158,7 +168,8 @@
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": "🏗 Work in Progress"
+                  "load_var_name": "mensa_name",
+                  "text": "mensa_info.getMenuInfo('__loaded_var__')"
                 }
               },
               {
@@ -183,6 +194,14 @@
               "action_params": {
                 "new_state": 0
                 }
+              }
+            ]
+          },
+          {
+            "input": "HOME",
+            "actions": [
+              {
+                "action_type": "RESTART"
               }
             ]
           }

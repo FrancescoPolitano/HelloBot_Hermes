@@ -368,6 +368,7 @@ def repeatState(p, **kwargs):
 FUNCTIONS_LIST = {
     "SEND_TEXT": "action_send_message",
     "CHANGE_STATE": "action_change_state",
+    "SAVE_VAR": "action_save_var",
     "RESTART": "action_restart"
 }
 
@@ -382,6 +383,12 @@ def performActions(p, actions, text):
 
 def action_send_message(p, action_params, text):
     msg = action_params['text']
+    if 'load_var_name' in action_params:
+        var_name = action_params['load_var_name']
+        var_value = p.getTmpVariable(var_name)
+        msg = msg.replace('__loaded_var__', var_value)
+        logging.debug('msg before eval: {}'.format(msg))
+        msg = eval(msg)
     if '__user_input__' in msg:
         msg = msg.replace('__user_input__', text)
         msg = eval(msg)
@@ -393,6 +400,11 @@ def action_send_message(p, action_params, text):
 def action_change_state(p, action_params, text):
     new_state = action_params['new_state']
     redirectToState(p, new_state)
+
+def action_save_var(p, action_params, text):
+    var_name = action_params['var_name']
+    var_value = text #action_params['var_name']
+    p.setTmpVariable(var_name, var_value, put=True)
 
 def action_restart(p, action_params, text):
     restart(p)
