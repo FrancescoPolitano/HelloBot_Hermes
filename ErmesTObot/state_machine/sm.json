@@ -1,0 +1,220 @@
+{
+  "config": {
+    "start_state": 0
+  },
+  "buttons": {
+
+ },
+  "states": {
+    "0": {
+      "instructions": "🏠 *Inizio*\n\n Premi su:\n 🔍🍽 CERCA MENSA per cercare la mensa più vicina.\n 📮 FEEDBACK per contattarci o inviarci suggerimenti.",
+      "keyboard": [["🔍🍽 CERCA MENSA", "MENSA INFO"], ["PREFERENZE", "📮 FEEDBACK"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "🔍🍽 CERCA MENSA",
+            "actions": [
+              {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 1
+                }
+              }
+            ]
+          },
+          {
+            "input": "MENSA INFO",
+            "actions": [
+              {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 2
+                }
+              }
+            ]
+          },
+          {
+            "input": "PREFERENZE",
+            "actions": [
+              {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 3
+                }
+              }
+            ]
+          },
+          {
+            "input": "📮 FEEDBACK",
+            "actions": [
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 9
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "1": {
+      "instructions": "Mandami la tua posizione.",
+      "triggers": {
+        "location": {
+          "actions": [
+            {
+              "action_type": "SEND_MAP",
+              "action_params": {
+                "url": ""
+              }
+            },
+            {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 0
+              }
+            }
+          ]
+        }
+      }
+    },
+    "2": {
+      "instructions": "Scegli la mensa che ti interessa.",
+      "keyboard": "utility.makeArray2D(mensa_info.mensa_names,1)",
+      "triggers": {
+        "text": [
+          {
+            "input": "*",
+            "validation": "'__user_input__' in flat_kb",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT",
+                "action_params": {
+                  "text": "mensa_info.getInfoMensa('__user_input__')"
+                }
+              },
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 4
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "3": {
+      "instructions": "Scegli la mensa per quale vorresti impostare preferenze.",
+      "keyboard": [["0"], ["1"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "0",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT",
+                "action_params": {
+                  "text": ""
+                }
+              },
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 5
+                }
+              }
+            ]
+          },
+          {
+            "input": "1",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT",
+                "action_params": {
+                  "text": ""
+                }
+              },
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 5
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "4": {
+      "instructions": "Scegli tipo di informazione.",
+      "keyboard": [["MENU", "STATS"], ["HOME"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "MENU",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT",
+                "action_params": {
+                  "text": "🏗 Work in Progress"
+                }
+              },
+              {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 0
+                }
+              }
+            ]
+          },
+          {
+            "input": "STATS",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT",
+                "action_params": {
+                  "text": "🏗 Work in Progress"
+                }
+              },
+              {
+              "action_type": "CHANGE_STATE",
+              "action_params": {
+                "new_state": 0
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "9": {
+      "instructions": "'📩 Non esitate a *contattarci*:\n\n ∙ 📝 Scrivi qua sotto qualsiasi feedback o consiglio\n ∙ 🗣 Entrare in chat con noi cliccando su @kercos",
+      "keyboard": [["🔙 INDIETRO"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "🔙 INDIETRO",
+            "actions": [
+              {
+                "action_type": "RESTART"
+              }
+            ]
+          },
+          {
+            "input": "*",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT_ADMIN",
+                "action_params": {
+                  "text": "__user_input__"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
