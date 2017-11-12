@@ -30,6 +30,10 @@ handlers:
   script: google.appengine.ext.deferred.deferred.application
   login: admin
 
+- url: /state_machine
+  static_dir: state_machine
+  application_readable: true
+
 - url: .*
   script: main.app
 

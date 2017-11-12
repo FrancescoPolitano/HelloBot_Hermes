@@ -12,6 +12,7 @@ import person
 from person import Person
 import date_time_util as dtu
 import webapp2
+import rasberry
 
 
 ########################
@@ -280,53 +281,117 @@ def redirectToState(p, new_state, **kwargs):
         p.setState(new_state)
     repeatState(p, **kwargs)
 
+import jsonUtil
+STATE_MACHINE = jsonUtil.json_load_byteified(open('state_machine/sm.json'))
+STATE_MACHINE_STATES = STATE_MACHINE['states']
 
 # ================================
 # REPEAT STATE
+# possible arguments: text, location, contact, photo, document, voice
 # ================================
-def repeatState(p, put=False, **kwargs):
-    methodName = "goToState" + str(p.state)
-    method = possibles.get(methodName)
-    if not method:
-        send_message(p, "Si è verificato un problema (" + methodName +
-             "). Segnalamelo mandando una messaggio a @kercos" + '\n' +
-             "Ora verrai reindirizzato/a nella schermata iniziale.")
-        restart(p)
+def repeatState(p, **kwargs):
+
+    text = kwargs['text'] if 'text' in kwargs.keys() else None
+    location = kwargs['location'] if 'location' in kwargs.keys() else None
+    contact = kwargs['contact'] if 'contact' in kwargs.keys() else None
+    photo = kwargs['photo'] if 'photo' in kwargs.keys() else None
+    document = kwargs['document'] if 'document' in kwargs.keys() else None
+    voice = kwargs['voice'] if 'voice' in kwargs.keys() else None
+
+    trigger_is_present = text or location or contact or photo or document or voice
+    state = str(p.state)
+    if state not in STATE_MACHINE_STATES.keys():
+        send_message(p, "Something wrong has happened: can't send you to state {}".format(state))
+        return
+    sm_state = STATE_MACHINE_STATES[state]
+    if not trigger_is_present:
+        if "instructions" in sm_state:
+            kb = sm_state['keyboard'] if 'keyboard' in sm_state else None
+            p.setLastKeyboard(kb)
+            send_message(p, sm_state["instructions"], kb)
     else:
-        if put:
-            p.put()
-        method(p, **kwargs)
+        # trigger is present
+        kb = p.getLastKeyboard()
+        valid_triggers = sm_state['triggers']
+        if text:
+            if 'text' in valid_triggers:
+                triggers_text = valid_triggers['text']
+                valid_text = [entry['input'] for entry in triggers_text]
+                if text in valid_text:
+                    index = valid_text.index(text)
+                    triggered_entry = triggers_text[index]
+                    actions = triggered_entry['actions']
+                    performActions(p, actions)
+                else:
+                    tellInputNonValidoUsareBottoni(p, kb)
+            else:
+                tellInputNonValido(p)
+        elif location:
+            if 'location' in valid_triggers:
+                pass
+            else:
+                tellInputNonValidoUsareBottoni(p, kb)
+        else:
+            tellInputNonValidoUsareBottoni(p, kb)
+
+#method(p, **kwargs)
+
+FUNCTIONS_LIST = {
+    "SEND_TEXT": "action_send_message",
+    "CHANGE_STATE": "action_change_state",
+    "RESTART": "action_restart"
+}
+
+def performActions(p, actions):
+    for action in actions:
+        action_type = action['action_type']
+        action_params = action['action_params'] if 'action_params' in action else None
+        methodName = FUNCTIONS_LIST[action_type]
+        method = possibles.get(methodName)
+        method(p, action_params)
+
+
+def action_send_message(p, action_params):
+    msg = action_params['text']
+    send_message(p, msg)
+
+def action_change_state(p, action_params):
+    new_state = action_params['new_state']
+    redirectToState(p, new_state)
+
+def action_restart(p, action_params):
+    restart(p)
 
 # ================================
 # UNIVERSAL COMMANDS
 # ================================
 
-def dealWithUniversalCommands(p, input):
+def dealWithUniversalCommands(p, text):
     from main_exception import deferredSafeHandleException
     if p.isAdmin():
-        if input.startswith('/testText '):
-            text = input.split(' ', 1)[1]
+        if text.startswith('/testText '):
+            text = text.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da ErmesTObot* 🔔\n\n' + text
                 logging.debug("Test broadcast " + msg)
                 send_message(p, msg)
                 return True
-        if input.startswith('/broadcast '):
-            text = input.split(' ', 1)[1]
+        if text.startswith('/broadcast '):
+            text = text.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da ErmesTObot* 🔔\n\n' + text
                 logging.debug("Starting to broadcast " + msg)
                 deferredSafeHandleException(broadcast, p, msg)
                 return True
-        elif input.startswith('/restartBroadcast '):
-            text = input.split(' ', 1)[1]
+        elif text.startswith('/restartBroadcast '):
+            text = text.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da ErmesTObot* 🔔\n\n' + text
                 logging.debug("Starting to broadcast and restart" + msg)
                 deferredSafeHandleException(broadcast, p, msg, restart_user=False)
                 return True
-        elif input.startswith('/textUser '):
-            p_id, text = input.split(' ', 2)[1]
+        elif text.startswith('/textUser '):
+            p_id, text = text.split(' ', 2)[1]
             if text:
                 p = Person.get_by_id(p_id)
                 if send_message(p, text, kb=p.getLastKeyboard()):
@@ -336,31 +401,30 @@ def dealWithUniversalCommands(p, input):
                     msg_admin = 'Problems sending message to {}'.format(p.getFirstNameLastNameUserName())
                     tell_admin(msg_admin)
                 return True
-        elif input.startswith('/restartUser '):
-            p_id = input.split(' ')[1]
+        elif text.startswith('/restartUser '):
+            p_id = text.split(' ')[1]
             p = Person.get_by_id(p_id)
             restart(p)
             msg_admin = 'User restarted: {}'.format(p.getFirstNameLastNameUserName())
             tell_admin(msg_admin)
             return True
-        elif input == '/testlist':
+        elif text == '/testlist':
             p_id = key.FEDE_FB_ID
             p = Person.get_by_id(p_id)
             main_fb.sendMessageWithList(p, 'Prova lista template', ['one','twp','three','four'])
             return True
-        elif input == '/restartAll':
+        elif text == '/restartAll':
             deferredSafeHandleException(restartAll)
             return True
-        elif input == '/restartAllNotInInitialState':
+        elif text == '/restartAllNotInInitialState':
             deferredSafeHandleException(restartAll)
-            return True
-        elif input == '/testSpeech':
-            redirectToState(p, 8)
             return True
     return False
 
-## +++++ BEGIN OF STATES +++++ ###
 
+
+
+'''
 # ================================
 # GO TO STATE 0: Initial State
 # ================================
@@ -420,7 +484,7 @@ def goToState9(p, **kwargs):
             msg = 'Grazie per il tuo messaggio, ti contatteremo il prima possibile.'
             send_message(p, msg)
             restart(p)
-
+'''
 
 ## +++++ END OF STATES +++++ ###
 
@@ -458,12 +522,10 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
                   "In qualsiasi momento puoi riattivarmi scrivendomi qualcosa."
             send_message(p, msg)
         else:
-            if not dealWithUniversalCommands(p, input=text):
+            if not dealWithUniversalCommands(p, text=text):
                 logging.debug("Sending {} to state {} with input {}".format(p.getFirstName(), p.state, text))
-                repeatState(p, input=text, location=location, contact=contact, photo=photo, document=document,
+                repeatState(p, text=text, location=location, contact=contact, photo=photo, document=document,
                             voice=voice)
-
-import rasberry
 
 app = webapp2.WSGIApplication([
     ('/telegram_me', main_telegram.MeHandler),

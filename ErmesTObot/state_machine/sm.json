@@ -1,0 +1,56 @@
+{
+  "config": {
+    "start_state": 0
+  },
+  "buttons": {
+
+  },
+  "states": {
+    "0": {
+      "instructions": "🏠 *Inizio*\n\n Premi su:\n 🔍🍽 CERCA MENSA per cercare la mensa più vicina.\n 📮 FEEDBACK per contattarci o inviarci suggerimenti.",
+      "keyboard": [["🔍🍽 CERCA MENSA"], ["📮 FEEDBACK"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "🔍🍽 CERCA MENSA",
+            "actions": [
+              {
+                "action_type": "SEND_TEXT", 
+                "action_params": {
+                  "text": "⚠️ Work in progress"
+                }
+              }
+            ]
+          },
+          {
+            "input": "📮 FEEDBACK",
+            "actions": [
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 9
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "9": {
+      "instructions": "'📩 Non esitate a *contattarci*:\n\n ∙ 📝 Scrivi qua sotto qualsiasi feedback o consiglio\n ∙ 🗣 Entrare in chat con noi cliccando su @kercos",
+      "keyboard": [["🔙 INDIETRO"]],
+      "triggers": {
+        "text": [
+          {
+            "input": "🔙 INDIETRO",
+            "actions": [
+              {
+                "action_type": "RESTART"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
