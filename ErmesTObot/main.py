@@ -59,7 +59,7 @@ BOTTONE_LOCATION = {
 # TEMPLATE API CALLS
 # ================================
 
-def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=True,
+def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=False,
          sleepDelay=False, hide_keyboard=False, force_reply=False, disable_web_page_preview=False):
     if p.isTelegramUser():
         return main_telegram.send_message(p, msg, kb, markdown, inline_keyboard, one_time_keyboard,
@@ -314,6 +314,9 @@ def repeatState(p, **kwargs):
                 kb = eval(kb)
             p.setLastKeyboard(kb)
             send_message(p, sm_state["instructions"], kb)
+        if "untriggered_actions" in sm_state:
+            actions = sm_state['untriggered_actions']
+            performActions(p, actions, text)
     else:
         # trigger is present
         kb = p.getLastKeyboard()
@@ -329,6 +332,7 @@ def repeatState(p, **kwargs):
                     actions = triggered_entry['actions']
                     performActions(p, actions, text)
                 elif '*' in valid_text:
+                    logging.debug('In text *')
                     index = valid_text.index('*')
                     triggered_entry = triggers_text[index]
                     if 'validation' in triggered_entry:
@@ -367,7 +371,9 @@ def repeatState(p, **kwargs):
 
 FUNCTIONS_LIST = {
     "SEND_TEXT": "action_send_message",
+    "SEND_TEXT_ADMIN": "action_send_message_admin",
     "CHANGE_STATE": "action_change_state",
+    "SAVE_VAR": "action_save_var",
     "RESTART": "action_restart"
 }
 
@@ -382,7 +388,15 @@ def performActions(p, actions, text):
 
 def action_send_message(p, action_params, text):
     msg = action_params['text']
-    if '__user_input__' in msg:
+    if 'rasberry' in msg:
+        msg = eval(msg)
+    elif 'load_var_name' in action_params:
+        var_name = action_params['load_var_name']
+        var_value = p.getTmpVariable(var_name)
+        msg = msg.replace('__loaded_var__', var_value)
+        logging.debug('msg before eval: {}'.format(msg))
+        msg = eval(msg)
+    elif '__user_input__' in msg:
         msg = msg.replace('__user_input__', text)
         msg = eval(msg)
         if msg is None:
@@ -390,9 +404,27 @@ def action_send_message(p, action_params, text):
             return
     send_message(p, msg)
 
+def action_send_message_admin(p, action_params, text):
+    msg = action_params['text']
+    logging.debug('in action_send_message_admin with text={} and msg={}'.format(text, msg))
+    if '__user_input__' in msg:
+        msg = msg.replace('__user_input__', text)
+        msg = eval(msg)
+        logging.debug('msg before eval: {}'.format(msg))
+        if msg is None:
+            tellInputNonValido(p)
+            return
+    tell_admin(msg)
+
+
 def action_change_state(p, action_params, text):
     new_state = action_params['new_state']
     redirectToState(p, new_state)
+
+def action_save_var(p, action_params, text):
+    var_name = action_params['var_name']
+    var_value = text #action_params['var_name']
+    p.setTmpVariable(var_name, var_value, put=True)
 
 def action_restart(p, action_params, text):
     restart(p)
