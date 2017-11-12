@@ -1,47 +1,21 @@
 package com.grazianomarallo.RestfulService;
 
-<<<<<<< HEAD
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Created by grazianomarallo on 11/11/2017.
  */
-public class Resource {
 
-    private static Map<String,Cafeteria> cafeterias  = new ConcurrentHashMap<String,Cafeteria>();
-    private static Map<String,Classroom> classrooms = new ConcurrentHashMap<String,Classroom>();
-    private static Map<String,Lab> labs = new ConcurrentHashMap<String,Lab>();
-
-
-
-    public static Map<String, Cafeteria> getCafeteria() {
-        return cafeterias;
-    }
-
-    public static Map<String, Lab> getLab() {
-        return labs;
-    }
-
-
-    public static Map<String, Classroom> getClassrooms() {
-        return classrooms;
-    }
-
-
-
-
-=======
 public abstract class Resource {
     private int capacity;
-    private int busyLevel;
+    private int takenSeats;
     private BaseInfo informations;
 
     public Resource(int capacity, BaseInfo informations) {
         this.capacity = capacity;
-        this.busyLevel = 0;
+        this.takenSeats = 0;
         this.informations = informations;
     }
+
+
 
     public int getCapacity() {
         return capacity;
@@ -51,12 +25,12 @@ public abstract class Resource {
         this.capacity = capacity;
     }
 
-    public int getBusyLevel() {
-        return busyLevel;
+    public int getTakenSeats() {
+        return takenSeats;
     }
 
-    public void setBusyLevel(int busyLevel) {
-        this.busyLevel = busyLevel;
+    public void setTakenSeats(int takenSeats) {
+        this.takenSeats = takenSeats;
     }
 
     public BaseInfo getInformations() {
@@ -66,5 +40,6 @@ public abstract class Resource {
     public void setInformations(BaseInfo informations) {
         this.informations = informations;
     }
->>>>>>> master
+
+
 }

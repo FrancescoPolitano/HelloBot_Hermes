@@ -1,5 +1,8 @@
 package com.grazianomarallo.RestfulService;
 
+/**
+ * Coordinates Handling
+ */
 public class Coordinates{
     private String latitude;
     private String longitude;
