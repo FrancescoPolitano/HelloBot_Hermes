@@ -7,12 +7,12 @@
  },
   "states": {
     "0": {
-      "instructions": "🏠 *Inizio*\n\n Premi su:\n 🔍🍽 CERCA MENSA per cercare la mensa più vicina.\n 📮 FEEDBACK per contattarci o inviarci suggerimenti.",
-      "keyboard": [["🔍🍽 CERCA MENSA", "MENSA INFO"], ["PREFERENZE", "📮 FEEDBACK"]],
+      "instructions": "🏠 *Inizio*\n\n Premi su:\n 🔎 CERCA  🍝 per cercare la mensa più vicina.\n 📮 FEEDBACK per contattarci o inviarci suggerimenti.",
+      "keyboard": [["🔎 CERCA  🍝", "ℹ️ INFO 🍝"], ["📮 FEEDBACK"]],
       "triggers": {
         "text": [
           {
-            "input": "🔍🍽 CERCA MENSA",
+            "input": "🔎 CERCA  🍝",
             "actions": [
               {
               "action_type": "CHANGE_STATE",
@@ -23,27 +23,13 @@
             ]
           },
           {
-            "input": "MENSA INFO",
+            "input": "ℹ️ INFO 🍝",
             "actions": [
               {
               "action_type": "CHANGE_STATE",
               "action_params": {
                 "new_state": 2
                 }
-              }
-            ]
-          },
-          {
-            "input": "PREFERENZE",
-            "actions": [
-              {
-              "action_type": "SEND_TEXT",
-              "action_params": {
-                "text": "🏗 Work in progress..."
-                }
-              },
-              {
-              "action_type": "RESTART"
               }
             ]
           },
@@ -159,7 +145,7 @@
     },
     "4": {
       "instructions": "Scegli tipo di informazione.",
-      "keyboard": [["MENU", "STATS"], ["HOME"]],
+      "keyboard": [["MENU", "STATS"], ["🏠 HOME"]],
       "triggers": {
         "text": [
           {
@@ -170,12 +156,6 @@
                 "action_params": {
                   "load_var_name": "mensa_name",
                   "text": "mensa_info.getMenuInfo('__loaded_var__')"
-                }
-              },
-              {
-              "action_type": "CHANGE_STATE",
-              "action_params": {
-                "new_state": 0
                 }
               }
             ]
@@ -198,7 +178,7 @@
             ]
           },
           {
-            "input": "HOME",
+            "input": "🏠 HOME",
             "actions": [
               {
                 "action_type": "RESTART"

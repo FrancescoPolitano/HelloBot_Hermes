@@ -24,10 +24,10 @@ def getInfoMensa(name):
         orario_dinner = entry['info']['dinner']["start"] + ' - ' + entry['info']['dinner']["end"]
         #freeSeats = capacity-takenSeats
         return "*Nome*: {}\n" \
-               "*Indirizzo:{}*\n" \
-               "*Capacità*:{}\n" \
-               "*Orario Pranzo:{}*\n" \
-               "*Orario Cena:{}*".format(name, address, capacity, orario_lunch, orario_dinner)
+               "*Indirizzo*: {}\n" \
+               "*Capacità*: {}\n" \
+               "*Orario Pranzo:* {}\n" \
+               "*Orario Cena:* {}".format(name, address, capacity, orario_lunch, orario_dinner)
     return None
 
 
@@ -40,7 +40,7 @@ def getMenuInfo(name):
     menu = jsonUtil.json_loads_byteified(r.text)
     primi = menu['first_plate']
     primi_piatti = [str_plate(x) for x in primi]
-    secondi = menu['first_plate']
+    secondi = menu['second_plate']
     secondi_piatti = [str_plate(x) for x in secondi]
     return '\n'.join(["PRIMI:\n---------", '\n'.join(primi_piatti), "\n\nSECONDI:\n---------", '\n'.join(secondi_piatti)])
 
@@ -48,8 +48,8 @@ def getMenuInfo(name):
 def str_plate(dict):
     return '\n'.join([
         '*{}*'.format(dict['name']),
-        "Gluten-Free:{}".format(checkbox(dict['glutenFree'])),
-        "Piatto Unico:{}".format(checkbox(dict['piatto_unico'])),
+        "  Gluten-Free: {}".format(checkbox(dict['glutenFree'])),
+        "  Piatto Unico: {}".format(checkbox(dict['piatto_unico'])),
     ])
 
 def checkbox(boolean):

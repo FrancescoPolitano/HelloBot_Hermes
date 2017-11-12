@@ -367,6 +367,7 @@ def repeatState(p, **kwargs):
 
 FUNCTIONS_LIST = {
     "SEND_TEXT": "action_send_message",
+    "SEND_TEXT_ADMIN": "action_send_message_admin",
     "CHANGE_STATE": "action_change_state",
     "SAVE_VAR": "action_save_var",
     "RESTART": "action_restart"
@@ -396,6 +397,18 @@ def action_send_message(p, action_params, text):
             tellInputNonValido(p)
             return
     send_message(p, msg)
+
+def action_send_message_admin(p, action_params, text):
+    msg = action_params['text']
+    if '__user_input__' in msg:
+        msg = msg.replace('__user_input__', text)
+        msg = eval(msg)
+        logging.debug('msg before eval: {}'.format(msg))
+        if msg is None:
+            tellInputNonValido(p)
+            return
+    tell_admin(msg)
+
 
 def action_change_state(p, action_params, text):
     new_state = action_params['new_state']
