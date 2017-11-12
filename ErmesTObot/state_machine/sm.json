@@ -61,16 +61,15 @@
     "1": {
       "instructions": "Mandami la tua posizione.",
       "triggers": {
-        "location":
-          {
-            "actions": [
-              {
-                "action_type": "SEND_MAP",
-                "action_params": {
-                  "url": ""
-                }
-              },
-              {
+        "location": {
+          "actions": [
+            {
+              "action_type": "SEND_MAP",
+              "action_params": {
+                "url": ""
+              }
+            },
+            {
               "action_type": "CHANGE_STATE",
               "action_params": {
                 "new_state": 0
@@ -79,36 +78,20 @@
           ]
         }
       }
-    ,
+    },
     "2": {
       "instructions": "Scegli la mensa che ti interessa.",
-      "keyboard": [["0"], ["1"]],
+      "keyboard": "utility.makeArray2D(mensa_info.mensa_names,1)",
       "triggers": {
         "text": [
           {
-            "input": "0",
+            "input": "*",
+            "validation": "'__user_input__' in flat_kb",
             "actions": [
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": ""
-                }
-              },
-              {
-                "action_type": "CHANGE_STATE",
-                "action_params": {
-                  "new_state": 4
-                }
-              }
-            ]
-          },
-          {
-            "input": "1",
-            "actions": [
-              {
-                "action_type": "SEND_TEXT",
-                "action_params": {
-                  "text": ""
+                  "text": "mensa_info.getInfoMensa('__user_input__')"
                 }
               },
               {
@@ -166,7 +149,7 @@
     },
     "4": {
       "instructions": "Scegli tipo di informazione.",
-      "keyboard": [["MENU"], ["STATS"]],
+      "keyboard": [["MENU", "STATS"], ["HOME"]],
       "triggers": {
         "text": [
           {
@@ -175,9 +158,7 @@
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": ""
-                }
-
+                  "text": "🏗 Work in Progress"
                 }
               },
               {
@@ -194,7 +175,7 @@
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": ""
+                  "text": "🏗 Work in Progress"
                 }
               },
               {
@@ -227,7 +208,7 @@
               {
                 "action_type": "SEND_TEXT_ADMIN",
                 "action_params": {
-                  "text": "__user__input__"
+                  "text": "__user_input__"
                 }
               }
             ]

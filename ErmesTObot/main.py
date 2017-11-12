@@ -14,6 +14,12 @@ import date_time_util as dtu
 import webapp2
 import rasberry
 
+import jsonUtil
+STATE_MACHINE = jsonUtil.json_load_byteified(open('state_machine/sm.json'))
+STATE_MACHINE_STATES = STATE_MACHINE['states']
+
+import mensa_info
+
 
 ########################
 WORK_IN_PROGRESS = False
@@ -53,7 +59,7 @@ BOTTONE_LOCATION = {
 # TEMPLATE API CALLS
 # ================================
 
-def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=False,
+def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=True,
          sleepDelay=False, hide_keyboard=False, force_reply=False, disable_web_page_preview=False):
     if p.isTelegramUser():
         return main_telegram.send_message(p, msg, kb, markdown, inline_keyboard, one_time_keyboard,
@@ -281,9 +287,6 @@ def redirectToState(p, new_state, **kwargs):
         p.setState(new_state)
     repeatState(p, **kwargs)
 
-import jsonUtil
-STATE_MACHINE = jsonUtil.json_load_byteified(open('state_machine/sm.json'))
-STATE_MACHINE_STATES = STATE_MACHINE['states']
 
 # ================================
 # REPEAT STATE
@@ -307,11 +310,14 @@ def repeatState(p, **kwargs):
     if not trigger_is_present:
         if "instructions" in sm_state:
             kb = sm_state['keyboard'] if 'keyboard' in sm_state else None
+            if isinstance(kb, str):
+                kb = eval(kb)
             p.setLastKeyboard(kb)
             send_message(p, sm_state["instructions"], kb)
     else:
         # trigger is present
         kb = p.getLastKeyboard()
+        flat_kb = utility.flatten(kb) if kb else None
         valid_triggers = sm_state['triggers']
         if text:
             if 'text' in valid_triggers:
@@ -321,14 +327,37 @@ def repeatState(p, **kwargs):
                     index = valid_text.index(text)
                     triggered_entry = triggers_text[index]
                     actions = triggered_entry['actions']
-                    performActions(p, actions)
+                    performActions(p, actions, text)
+                elif '*' in valid_text:
+                    index = valid_text.index('*')
+                    triggered_entry = triggers_text[index]
+                    if 'validation' in triggered_entry:
+                        eval_expression = triggered_entry['validation']
+                        eval_expression = eval_expression.replace('__user_input__', text)
+                        #logging.debug('eval_expression: {}'.format(eval_expression))
+                        eval_pass = eval(eval_expression)
+                        if not eval_pass:
+                            tellInputNonValidoUsareBottoni(p, kb)
+                        else:
+                            actions = triggered_entry['actions']
+                            performActions(p, actions, text)
                 else:
                     tellInputNonValidoUsareBottoni(p, kb)
             else:
                 tellInputNonValido(p)
         elif location:
             if 'location' in valid_triggers:
-                pass
+                triggers_location = valid_triggers['location']
+                if location:
+                    lat, lon = location['latitude'], location['longitude']
+                    p.setLocation(lat, lon)
+                    img_url, text = mensa_info.getMenseNearPositionImgUrl(lat, lon)
+                    # logging.debug('img_url: {}'.format(img_url))
+                    if img_url:
+                        send_photo_url(p, img_url)
+                    send_message(p, text)
+                    sendWaitingAction(p)
+                    restart(p)
             else:
                 tellInputNonValidoUsareBottoni(p, kb)
         else:
@@ -342,24 +371,30 @@ FUNCTIONS_LIST = {
     "RESTART": "action_restart"
 }
 
-def performActions(p, actions):
+def performActions(p, actions, text):
     for action in actions:
         action_type = action['action_type']
         action_params = action['action_params'] if 'action_params' in action else None
         methodName = FUNCTIONS_LIST[action_type]
         method = possibles.get(methodName)
-        method(p, action_params)
+        method(p, action_params, text)
 
 
-def action_send_message(p, action_params):
+def action_send_message(p, action_params, text):
     msg = action_params['text']
+    if '__user_input__' in msg:
+        msg = msg.replace('__user_input__', text)
+        msg = eval(msg)
+        if msg is None:
+            tellInputNonValido(p)
+            return
     send_message(p, msg)
 
-def action_change_state(p, action_params):
+def action_change_state(p, action_params, text):
     new_state = action_params['new_state']
     redirectToState(p, new_state)
 
-def action_restart(p, action_params):
+def action_restart(p, action_params, text):
     restart(p)
 
 # ================================
@@ -423,69 +458,6 @@ def dealWithUniversalCommands(p, text):
 
 
 
-
-'''
-# ================================
-# GO TO STATE 0: Initial State
-# ================================
-
-def goToState0(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
-    if giveInstruction:
-        msg = '🏠 *Inizio*\n\n' \
-              'Premi su:\n' \
-              '{} per cercare la mensa più vicina.\n' \
-              '{} per contattarci o inviarci suggerimenti'.\
-            format(BOTTENE_CERCA_MENSA, BOTTONE_FEEDBACK)
-        kb = [
-            [BOTTENE_CERCA_MENSA],
-            [BOTTONE_FEEDBACK]
-        ]
-        #if p.isAdmin():
-        #    kb[-1].append(BOTTONE_ADMIN)
-        p.setLastKeyboard(kb)
-        send_message(p, msg, kb)
-    else:
-        kb = p.getLastKeyboard()
-        if input in utility.flatten(kb):
-            if input == BOTTENE_CERCA_MENSA:
-                msg = '⚠️ Work in progress'
-                send_message(p, msg, kb)
-            elif input == BOTTONE_FEEDBACK:
-                redirectToState(p, 9)
-            #else:
-            #    assert input == BOTTONE_ADMIN
-            #    redirectToState(p, 7)
-        else:
-            tellInputNonValidoUsareBottoni(p, kb)
-
-
-# ================================
-# GO TO STATE 9: Contattaci
-# ================================
-
-def goToState9(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
-    if giveInstruction:
-        kb = [[BOTTONE_INDIETRO]]
-        msg = '📩 Non esitate a *contattarci*:\n\n' \
-              '∙ 📝 Scrivi qua sotto qualsiasi feedback o consiglio\n' \
-              '∙ 🗣 Entrare in chat con noi cliccando su @kercos\n'
-        p.setLastKeyboard(kb)
-        send_message(p, msg, kb)
-    else:
-        if input == BOTTONE_INDIETRO:
-            restart(p)
-        else:
-            msg_admin = '📩📩📩\nMessaggio di feedback da {}:\n{}'.format(p.getFirstNameLastNameUserName(), input)
-            tell_admin(msg_admin)
-            msg = 'Grazie per il tuo messaggio, ti contatteremo il prima possibile.'
-            send_message(p, msg)
-            restart(p)
-'''
-
 ## +++++ END OF STATES +++++ ###
 
 def dealWithUserInteraction(chat_id, name, last_name, username, application, text,
@@ -521,6 +493,12 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
             msg = "🚫 Hai *disabilitato* ErmesTObot.\n" \
                   "In qualsiasi momento puoi riattivarmi scrivendomi qualcosa."
             send_message(p, msg)
+        elif text == '/testapi':
+            import requests
+            url = 'https://00b501df.ngrok.io/RestfulService_war_exploded/restresources/cafeteria/0/takenSeats'
+            r = requests.get(url)
+            result = r.json()
+            send_message(p, "result: {}".format(result))
         else:
             if not dealWithUniversalCommands(p, text=text):
                 logging.debug("Sending {} to state {} with input {}".format(p.getFirstName(), p.state, text))
