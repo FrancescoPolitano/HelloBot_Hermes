@@ -1,0 +1,36 @@
+{
+  "first_plate": [
+    {
+      "glutenFree": false,
+      "name": "Pappardelle ai funghi",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Lasagne",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": false,
+      "name": "Parmiggiana",
+      "piatto_unico": false
+    }
+  ],
+  "second_plate": [
+    {
+      "glutenFree": true,
+      "name": "Petto di pollo a limone",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": true,
+      "name": "Hamburger di soia",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Straccetti rucola e grana",
+      "piatto_unico": false
+    }
+  ]
+}

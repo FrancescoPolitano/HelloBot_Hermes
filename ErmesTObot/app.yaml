@@ -34,6 +34,10 @@ handlers:
   static_dir: state_machine
   application_readable: true
 
+- url: /data
+  static_dir: data
+  application_readable: true
+
 - url: .*
   script: main.app
 

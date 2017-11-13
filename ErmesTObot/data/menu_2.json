@@ -1,0 +1,36 @@
+{
+  "first_plate": [
+    {
+      "glutenFree": false,
+      "name": "Pizza",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Bucatini alla amatriciana",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": false,
+      "name": "Farfalle con panna e prosciutto",
+      "piatto_unico": false
+    }
+  ],
+  "second_plate": [
+    {
+      "glutenFree": true,
+      "name": "Polenta",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": false,
+      "name": "Pesce Spada",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Cus Cus",
+      "piatto_unico": false
+    }
+  ]
+}

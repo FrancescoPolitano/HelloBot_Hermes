@@ -3,15 +3,17 @@ import requests
 import jsonUtil
 import key
 
-base_url = 'https://00b501df.ngrok.io/RestfulService_war_exploded/restresources'
-mensa_info_url = base_url + '/cafeterias'
-menu_info_url = base_url + '/cafeteria/{}/menu'
+#base_url = 'https://00b501df.ngrok.io/RestfulService_war_exploded/restresources'
+#mensa_info_url = base_url + '/cafeterias'
+#menu_info_url = base_url + '/cafeteria/{}/menu'
+#r = requests.get(mensa_info_url)
+#mensa_info = jsonUtil.json_loads_byteified(r.text)
+#
+#
 
-r = requests.get(mensa_info_url)
-mensa_info = jsonUtil.json_loads_byteified(r.text)
+mensa_info = jsonUtil.json_load_byteified(open("data/cafeterias.json"))
 mensa_names = [x['info']['name'] for x in mensa_info]
 mensa_name_loc = {x['info']['name']: x['info']['coordinates'] for x in mensa_info}
-
 
 def getInfoMensa(name):
     match = [x for x in mensa_info if x['info']['name']==name]
@@ -30,14 +32,20 @@ def getInfoMensa(name):
                "*Orario Cena:* {}".format(name, address, capacity, orario_lunch, orario_dinner)
     return None
 
-
-def getMenuInfo(name):
-    if name not in mensa_names:
-        return None
+def getMenu(name):
+    assert name in mensa_names
     index = mensa_names.index(name)
+    '''
     url = menu_info_url.format(index)
     r = requests.get(url)
     menu = jsonUtil.json_loads_byteified(r.text)
+    '''
+    menu = jsonUtil.json_load_byteified(open("data/menu_{}.json".format(index)))
+    return menu
+
+def getMenuInfo(name):
+    assert name in mensa_names
+    menu = getMenu(name)
     primi = menu['first_plate']
     primi_piatti = [str_plate(x) for x in primi]
     secondi = menu['second_plate']

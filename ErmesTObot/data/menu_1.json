@@ -1,0 +1,36 @@
+{
+  "first_plate": [
+    {
+      "glutenFree": false,
+      "name": "Bucatini",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": true,
+      "name": "Pennette al pesto ",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": false,
+      "name": "Trofie alla panna",
+      "piatto_unico": false
+    }
+  ],
+  "second_plate": [
+    {
+      "glutenFree": true,
+      "name": "Coscia di pollo",
+      "piatto_unico": false
+    },
+    {
+      "glutenFree": false,
+      "name": "Arrosto di maiale",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Bastoncini di merluzzo",
+      "piatto_unico": false
+    }
+  ]
+}

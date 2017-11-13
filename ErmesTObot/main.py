@@ -20,7 +20,6 @@ STATE_MACHINE_STATES = STATE_MACHINE['states']
 
 import mensa_info
 
-
 ########################
 WORK_IN_PROGRESS = False
 ########################
@@ -342,9 +341,9 @@ def repeatState(p, **kwargs):
                         eval_pass = eval(eval_expression)
                         if not eval_pass:
                             tellInputNonValidoUsareBottoni(p, kb)
-                        else:
-                            actions = triggered_entry['actions']
-                            performActions(p, actions, text)
+                            return
+                    actions = triggered_entry['actions']
+                    performActions(p, actions, text)
                 else:
                     tellInputNonValidoUsareBottoni(p, kb)
             else:
@@ -360,8 +359,6 @@ def repeatState(p, **kwargs):
                     if img_url:
                         send_photo_url(p, img_url)
                     send_message(p, text)
-                    sendWaitingAction(p)
-                    restart(p)
             else:
                 tellInputNonValidoUsareBottoni(p, kb)
         else:
@@ -374,6 +371,7 @@ FUNCTIONS_LIST = {
     "SEND_TEXT_ADMIN": "action_send_message_admin",
     "CHANGE_STATE": "action_change_state",
     "SAVE_VAR": "action_save_var",
+    "WAIT": "action_sendWaitingAction",
     "RESTART": "action_restart"
 }
 
@@ -403,6 +401,9 @@ def action_send_message(p, action_params, text):
             tellInputNonValido(p)
             return
     send_message(p, msg)
+
+def action_sendWaitingAction(p, action_params, text):
+    sendWaitingAction(p, sleep_time=1)
 
 def action_send_message_admin(p, action_params, text):
     msg = action_params['text']

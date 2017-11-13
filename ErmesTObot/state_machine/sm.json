@@ -7,12 +7,12 @@
  },
   "states": {
     "0": {
-      "instructions": "🏠 *Inizio*\n\n Premi su:\n🔎 CERCA  🍝 per cercare la mensa più vicina.\nℹ️ INFO 🍝 per info più dettagliate\n📮 FEEDBACK per inviarci suggerimenti.",
-      "keyboard": [["🔎 CERCA  🍝", "ℹ️ INFO 🍝"], ["📮 FEEDBACK"]],
+      "instructions": "🏠 *Inizio*\n\n Premi su:\n🔎 CERCA 🍝 per cercare la mensa più vicina.\nℹ️ INFO 🍝 per info più dettagliate\n📮 FEEDBACK per inviarci suggerimenti.",
+      "keyboard": [["🔎 CERCA 🍝", "ℹ️ INFO 🍝"], ["📮 FEEDBACK"]],
       "triggers": {
         "text": [
           {
-            "input": "🔎 CERCA  🍝",
+            "input": "🔎 CERCA 🍝",
             "actions": [
               {
               "action_type": "CHANGE_STATE",
@@ -49,19 +49,24 @@
     },
     "1": {
       "instructions": "Mandami la tua posizione.",
+      "keyboard": [["🔙 INDIETRO"]],
       "triggers": {
+        "text": [
+          {
+            "input": "🔙 INDIETRO",
+            "actions": [
+              {
+                "action_type": "RESTART"
+              }
+            ]
+          }
+        ],
         "location": {
           "actions": [
             {
               "action_type": "SEND_MAP",
               "action_params": {
-                "url": ""
-              }
-            },
-            {
-              "action_type": "CHANGE_STATE",
-              "action_params": {
-                "new_state": 0
+                "url": "https://00b501df.ngrok.io/RestfulService_war_exploded/restresources/cafeterias"
               }
             }
           ]
@@ -103,7 +108,7 @@
     },
     "4": {
       "instructions": "Scegli tipo di informazione.",
-      "keyboard": [["🏠 HOME"],["📜 MENU", "📊 STATS"], ["🔙 INDIETRO"]],
+      "keyboard": [["📜 MENU", "📊 STATS"], ["🔙 INDIETRO","🏠 HOME"]],
       "triggers": {
         "text": [
           {
@@ -152,7 +157,7 @@
       }
     },
     "5": {
-      "instructions": "*Informazioni affluenza:*\n\n",
+      "instructions": "*Informazioni in tempo reale sull'affluenza:*\n\n",
       "keyboard": [["🔙 INDIETRO"]],
       "untriggered_actions": [
         {
@@ -195,9 +200,9 @@
             "input": "*",
             "actions": [
               {
-                "action_type": "SEND_TEXT_ADMIN",
+                "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": "__user_input__"
+                  "text": "Grazie per il tuo input! 😊"
                 }
               }
             ]

@@ -1,0 +1,26 @@
+{
+  "first_plate": [
+    {
+      "glutenFree": false,
+      "name": "Lasagne Bianche",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Pasta al forno",
+      "piatto_unico": false
+    }
+  ],
+  "second_plate": [
+    {
+      "glutenFree": true,
+      "name": "Pizza",
+      "piatto_unico": true
+    },
+    {
+      "glutenFree": true,
+      "name": "Arrosto di maiale",
+      "piatto_unico": false
+    }
+  ]
+}
