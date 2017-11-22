@@ -18,7 +18,7 @@ import jsonUtil
 STATE_MACHINE = jsonUtil.json_load_byteified(open('state_machine/sm.json'))
 STATE_MACHINE_STATES = STATE_MACHINE['states']
 
-import mensa_info
+import mensa
 
 ########################
 WORK_IN_PROGRESS = False
@@ -307,19 +307,12 @@ def repeatState(p, **kwargs):
         return
     sm_state = STATE_MACHINE_STATES[state]
     if not trigger_is_present:
-        if "instructions" in sm_state:
-            kb = sm_state['keyboard'] if 'keyboard' in sm_state else None
-            if isinstance(kb, str):
-                kb = eval(kb)
-            p.setLastKeyboard(kb)
-            send_message(p, sm_state["instructions"], kb)
-        if "untriggered_actions" in sm_state:
-            actions = sm_state['untriggered_actions']
-            performActions(p, actions, text)
+        assert "untriggered_actions" in sm_state
+        actions = sm_state['untriggered_actions']
+        performActions(p, actions)
     else:
         # trigger is present
         kb = p.getLastKeyboard()
-        flat_kb = utility.flatten(kb) if kb else None
         valid_triggers = sm_state['triggers']
         if text:
             if 'text' in valid_triggers:
@@ -329,105 +322,175 @@ def repeatState(p, **kwargs):
                     index = valid_text.index(text)
                     triggered_entry = triggers_text[index]
                     actions = triggered_entry['actions']
-                    performActions(p, actions, text)
+                    performActions(p, actions, text=text)
                 elif '*' in valid_text:
                     logging.debug('In text *')
                     index = valid_text.index('*')
                     triggered_entry = triggers_text[index]
                     if 'validation' in triggered_entry:
                         eval_expression = triggered_entry['validation']
-                        eval_expression = eval_expression.replace('__user_input__', text)
-                        #logging.debug('eval_expression: {}'.format(eval_expression))
-                        eval_pass = eval(eval_expression)
+                        eval_pass = processExpToEval(p, eval_expression, **kwargs)
                         if not eval_pass:
                             tellInputNonValidoUsareBottoni(p, kb)
                             return
                     actions = triggered_entry['actions']
-                    performActions(p, actions, text)
+                    performActions(p, actions, text=text)
                 else:
                     tellInputNonValidoUsareBottoni(p, kb)
             else:
                 tellInputNonValido(p)
         elif location:
             if 'location' in valid_triggers:
-                triggers_location = valid_triggers['location']
-                if location:
-                    lat, lon = location['latitude'], location['longitude']
-                    p.setLocation(lat, lon)
-                    img_url, text = mensa_info.getMenseNearPositionImgUrl(lat, lon)
-                    # logging.debug('img_url: {}'.format(img_url))
-                    if img_url:
-                        send_photo_url(p, img_url)
-                    send_message(p, text)
+                actions = valid_triggers['location']['actions']
+                performActions(p, actions, location=location)
             else:
                 tellInputNonValidoUsareBottoni(p, kb)
+        elif photo:
+            if 'photo' in valid_triggers:
+                actions = valid_triggers['photo']['actions']
+                performActions(p, actions, photo=photo)
+        elif document:
+            if 'document' in valid_triggers:
+                actions = valid_triggers['document']['actions']
+                performActions(p, actions, document=document)
         else:
             tellInputNonValidoUsareBottoni(p, kb)
 
-#method(p, **kwargs)
 
 FUNCTIONS_LIST = {
+    "COND_ACTIONS": "action_conditional_actions",
     "SEND_TEXT": "action_send_message",
     "SEND_TEXT_ADMIN": "action_send_message_admin",
+    "SEND_PHOTO": "action_send_photo",
     "CHANGE_STATE": "action_change_state",
     "SAVE_VAR": "action_save_var",
+    "EXECUTE": "action_execute",
     "WAIT": "action_sendWaitingAction",
     "RESTART": "action_restart"
 }
 
-def performActions(p, actions, text):
+def performActions(p, actions, **kwargs):
     for action in actions:
         action_type = action['action_type']
         action_params = action['action_params'] if 'action_params' in action else None
         methodName = FUNCTIONS_LIST[action_type]
         method = possibles.get(methodName)
-        method(p, action_params, text)
+        method(p, action_params, **kwargs)
 
+def action_conditional_actions(p, action_params, **kwargs):
+    assert "cond_eval" in action_params
+    assert "options" in action_params
+    condition = action_params["cond_eval"]
+    result = str(processExpToEval(p, condition, **kwargs))
+    options = action_params["options"]
+    assert result in options
+    actions = options[result]
+    performActions(p, actions, **kwargs)
 
-def action_send_message(p, action_params, text):
-    msg = action_params['text']
-    if 'rasberry' in msg:
-        msg = eval(msg)
-    elif 'load_var_name' in action_params:
-        var_name = action_params['load_var_name']
-        var_value = p.getTmpVariable(var_name)
-        msg = msg.replace('__loaded_var__', var_value)
-        logging.debug('msg before eval: {}'.format(msg))
-        msg = eval(msg)
-    elif '__user_input__' in msg:
-        msg = msg.replace('__user_input__', text)
-        msg = eval(msg)
-        if msg is None:
-            tellInputNonValido(p)
-            return
-    send_message(p, msg)
+def action_execute(p, action_params, **kwargs):
+    assert "command" in action_params
+    command = action_params["command"]
+    processExpToEval(p, command, **kwargs)
 
-def action_sendWaitingAction(p, action_params, text):
-    sendWaitingAction(p, sleep_time=1)
+def action_send_message(p, action_params, **kwargs):
+    if 'text' in action_params:
+        output_text = action_params['text']
+    else:
+        assert 'text_eval' in action_params
+        text_eval = action_params['text_eval']
+        output_text = processExpToEval(p, text_eval, **kwargs)
+    kb = None
+    if "keyboard" in action_params:
+        kb = action_params["keyboard"]
+    elif "keyboard_eval" in action_params:
+        kb = processExpToEval(p, action_params["keyboard_eval"], **kwargs)
+    p.setLastKeyboard(kb)
+    send_message(p, output_text, kb)
 
-def action_send_message_admin(p, action_params, text):
-    msg = action_params['text']
-    logging.debug('in action_send_message_admin with text={} and msg={}'.format(text, msg))
-    if '__user_input__' in msg:
-        msg = msg.replace('__user_input__', text)
-        msg = eval(msg)
-        logging.debug('msg before eval: {}'.format(msg))
-        if msg is None:
-            tellInputNonValido(p)
-            return
-    tell_admin(msg)
+def action_send_photo(p, action_params, **kwargs):
+    if 'url' in action_params:
+        url = action_params['url']
+    else:
+        assert 'url_eval' in action_params
+        url_eval = action_params['url_eval']
+        url = processExpToEval(p, url_eval, **kwargs)
+    send_photo_url(p, url)
 
+def processExpToEval(p, expression, **kwargs):
+    import re
+    logging.debug('Expression to eval: {}'.format(expression))
+    ## replace tmp variables
+    var_pattern = '__var\[([^\]]*)\]__' # e.g., __var[mensa_name]__ (var name in bracket should not contain brackets)
+    while True:
+        searchVar = re.search(var_pattern, expression)
+        if searchVar:
+            match = searchVar.group()
+            var_name = searchVar.group(1)
+            # dynamically assing variable 'var_name'
+            exec_command = "{0} = p.getTmpVariable('{0}')".format(var_name)
+            logging.debug('Executing: {}'.format(exec_command))
+            exec(exec_command)
+            expression = expression.replace(match, var_name)
+        else:
+            break
+    ## replace text
+    if '__user_input__' in expression:
+        assert 'text' in kwargs
+        text = kwargs['text']
+        expression = expression.replace('__user_input__', 'text')
+    ## replace text
+    if '__user_info__' in expression:
+        user_info = p.getFirstNameLastNameUserName()
+        expression = expression.replace('__user_info__', 'user_info')
+    ## replace location
+    if '__location__' in expression:
+        assert 'location' in kwargs
+        location = kwargs['location']
+        expression = expression.replace('__location__', 'location')
+    ## replace photo
+    if '__photo__' in expression:
+        assert 'photo' in kwargs
+        photo = kwargs['photo']
+        expression = expression.replace('__photo__', 'photo')
+    if '__previous_kb__' in expression:
+        kb = p.getLastKeyboard()
+        previous_kb = utility.flatten(kb) if kb else []
+        expression = expression.replace('__previous_kb__', 'previous_kb')
+    logging.debug('Expression after processing: {}'.format(expression))
+    evalResult = eval(expression)
+    logging.debug('Eval result: {}'.format(evalResult))
+    return evalResult
 
-def action_change_state(p, action_params, text):
+def action_sendWaitingAction(p, action_params, **kwargs):
+    sleep_time = action_params['sleep_time'] if 'sleep_time' in action_params else 0
+    sendWaitingAction(p, sleep_time)
+
+def action_send_message_admin(p, action_params, **kwargs):
+    if 'text' in action_params:
+        output_text = action_params['text']
+    else:
+        assert 'text_eval' in action_params
+        text_eval = action_params['text_eval']
+        output_text = processExpToEval(p, text_eval, **kwargs)
+    tell_admin(output_text)
+
+def action_change_state(p, action_params, **kwargs):
     new_state = action_params['new_state']
     redirectToState(p, new_state)
 
-def action_save_var(p, action_params, text):
+def action_save_var(p, action_params, **kwargs):
     var_name = action_params['var_name']
-    var_value = text #action_params['var_name']
-    p.setTmpVariable(var_name, var_value, put=True)
+    put = action_params['put'] if 'put' in action_params else False
+    if 'var_value' in action_params:
+        var_value = action_params['var_value']
+    else:
+        assert 'var_value_eval' in action_params
+        var_value_eval = action_params['var_value_eval']
+        var_value = processExpToEval(p, var_value_eval, **kwargs)
+    logging.debug('Setting var:{} to:{}'.format(var_name, var_value))
+    p.setTmpVariable(var_name, var_value, put)
 
-def action_restart(p, action_params, text):
+def action_restart(p, action_params, **kwargs):
     restart(p)
 
 # ================================

@@ -100,6 +100,7 @@ class Person(geomodel.GeoModel, ndb.Model): #ndb.Expando
             result += ' ' + self.getLastName(escapeMarkdown = escapeMarkdown)
         if self.username:
             result += ' @' + self.getUsername(escapeMarkdown = escapeMarkdown)
+        result += ' {}'.format(self.getId())
         return result
 
     def setNotificationMode(self, mode, put=True):

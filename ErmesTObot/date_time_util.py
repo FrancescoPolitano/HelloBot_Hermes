@@ -19,7 +19,7 @@ def convertCETtoUTC(dt_utc):
     CET_ZONE = pytz_zip.timezone('Europe/Amsterdam')  # pytz.timezone('CET')
     return dt_utc.replace(tzinfo=CET_ZONE).astimezone(UTC_ZONE)
 
-def nowCET(removeTimezone = False):
+def nowCET(removeTimezone = True):
     utc = nowUTC()
     cet = convertUTCtoCET(utc)
     if removeTimezone:

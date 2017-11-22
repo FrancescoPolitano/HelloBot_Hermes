@@ -3,21 +3,40 @@
     "start_state": 0
   },
   "buttons": {
-
- },
+    "buton_test": "test"
+  },
   "states": {
     "0": {
-      "instructions": "🏠 *Inizio*\n\n Premi su:\n🔎 CERCA 🍝 per cercare la mensa più vicina.\nℹ️ INFO 🍝 per info più dettagliate\n📮 FEEDBACK per inviarci suggerimenti.",
-      "keyboard": [["🔎 CERCA 🍝", "ℹ️ INFO 🍝"], ["📮 FEEDBACK"]],
+      "description": "Initial State",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "🏠 *Inizio*\n\n Premi su:\n🔎 CERCA 🍝 per trovare la mensa più vicina.\nℹ️ INFO 🍝 per info più dettagliate (orari, menu)\n📸 CONTRIBUISCI per aggiornare le info di una mensa\n📮 FEEDBACK per inviarci suggerimenti",
+            "keyboard": [
+              [
+                "🔎 CERCA 🍝",
+                "ℹ️ INFO 🍝"
+              ],
+              [
+                "📸 CONTRIBUISCI"
+              ],
+              [
+                "📮 FEEDBACK"
+              ]
+            ]
+          }
+        }
+      ],
       "triggers": {
         "text": [
           {
             "input": "🔎 CERCA 🍝",
             "actions": [
               {
-              "action_type": "CHANGE_STATE",
-              "action_params": {
-                "new_state": 1
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 1
                 }
               }
             ]
@@ -26,9 +45,20 @@
             "input": "ℹ️ INFO 🍝",
             "actions": [
               {
-              "action_type": "CHANGE_STATE",
-              "action_params": {
-                "new_state": 2
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 2
+                }
+              }
+            ]
+          },
+          {
+            "input": "📸 CONTRIBUISCI",
+            "actions": [
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 6
                 }
               }
             ]
@@ -48,8 +78,20 @@
       }
     },
     "1": {
-      "instructions": "Mandami la tua posizione.",
-      "keyboard": [["🔙 INDIETRO"]],
+      "description": "Search mensa by position",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "Mandami la tua posizione.",
+            "keyboard": [
+              [
+                "🔙 INDIETRO"
+              ]
+            ]
+          }
+        }
+      ],
       "triggers": {
         "text": [
           {
@@ -64,35 +106,76 @@
         "location": {
           "actions": [
             {
-              "action_type": "SEND_MAP",
-              "action_params": {
-                "url": "https://00b501df.ngrok.io/RestfulService_war_exploded/restresources/cafeterias"
-              }
+                "action_type": "SAVE_VAR",
+                "action_params": {
+                  "var_name": "nearby_mense_dict",
+                  "var_value_eval": "mensa.getMenseNearPosition(__location__['latitude'], __location__['longitude'], radius=10)"
+                }
+            },
+            {
+              "action_type": "COND_ACTIONS",
+                "action_params": {
+                  "cond_eval": "len(__var[nearby_mense_dict]__)>0",
+                  "options": {
+                    "True": [
+                      {
+                        "action_type": "SEND_PHOTO",
+                        "action_params": {
+                          "url_eval": "mensa.getMenseNearPositionImgUrl(__var[nearby_mense_dict]__,__location__['latitude'], __location__['longitude'])"
+                        }
+                      },
+                      {
+                        "action_type": "SEND_TEXT",
+                        "action_params": {
+                          "text_eval": "mensa.getMenseNearPositionText(__var[nearby_mense_dict]__)"
+                        }
+                      }
+                    ],
+                    "False": [
+                      {
+                        "action_type": "SEND_TEXT",
+                        "action_params": {
+                          "text": "Non ci sono mense in prossimità della posizione inserita."
+                        }
+                      }
+                    ]
+                  }
+                }
             }
+
+
           ]
         }
       }
     },
     "2": {
-      "instructions": "Scegli la mensa che ti interessa.",
-      "keyboard": "utility.makeArray2D(mensa_info.mensa_names,1)",
+      "description": "Select Mensa",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "Scegli la mensa che ti interessa.",
+            "keyboard_eval": "utility.makeArray2D(mensa.getMensaNames(),1)"
+          }
+        }
+      ],
       "triggers": {
         "text": [
           {
             "input": "*",
-            "validation": "'__user_input__' in flat_kb",
+            "validation": "__user_input__ in __previous_kb__",
             "actions": [
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
-                  "text": "mensa_info.getInfoMensa('__user_input__')"
+                  "text_eval": "mensa.getInfoMensa(__user_input__)"
                 }
               },
               {
                 "action_type": "SAVE_VAR",
                 "action_params": {
                   "var_name": "mensa_name",
-                  "var_value": "__user_input__"
+                  "var_value_eval": "__user_input__"
                 }
               },
               {
@@ -107,18 +190,58 @@
       }
     },
     "4": {
-      "instructions": "Scegli tipo di informazione.",
-      "keyboard": [["📜 MENU", "📊 STATS"], ["🔙 INDIETRO","🏠 HOME"]],
+      "description": "Mensa Info",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "Scegli tipo di informazione.",
+            "keyboard": [
+              [
+                "📜 MENU",
+                "📊 STATS"
+              ],
+              [
+                "🔙 INDIETRO",
+                "🏠 HOME"
+              ]
+            ]
+          }
+        }
+      ],
       "triggers": {
         "text": [
           {
             "input": "📜 MENU",
             "actions": [
               {
-                "action_type": "SEND_TEXT",
+                "action_type": "COND_ACTIONS",
                 "action_params": {
-                  "load_var_name": "mensa_name",
-                  "text": "mensa_info.getMenuInfo('__loaded_var__')"
+                  "cond_eval": "mensa.getMenuImageId(__var[mensa_name]__) is None",
+                  "options": {
+                    "True": [
+                      {
+                        "action_type": "SEND_TEXT",
+                        "action_params": {
+                          "text": "❗ Non abbiamo ancora nessun menu per questa mensa.\nTorna all'inizio e premi su 📸 CONTRIBUISCI se vuoi mandarci il menu aggiornato."
+                        }
+                      }
+                    ],
+                    "False": [
+                      {
+                        "action_type": "SEND_TEXT",
+                        "action_params": {
+                          "text_eval": "'📅🕑 Ultima modifica: {}'.format(mensa.getMenuImageLastUpdateDateTime(__var[mensa_name]__))"
+                        }
+                      },
+                      {
+                        "action_type": "SEND_PHOTO",
+                        "action_params": {
+                          "url_eval": "mensa.getMenuImageId(__var[mensa_name]__)"
+                        }
+                      }
+                    ]
+                  }
                 }
               }
             ]
@@ -127,9 +250,9 @@
             "input": "📊 STATS",
             "actions": [
               {
-              "action_type": "CHANGE_STATE",
-              "action_params": {
-                "new_state": 5
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 5
                 }
               }
             ]
@@ -157,13 +280,17 @@
       }
     },
     "5": {
-      "instructions": "*Informazioni in tempo reale sull'affluenza:*\n\n",
-      "keyboard": [["🔙 INDIETRO"]],
+      "description": "Stats info",
       "untriggered_actions": [
         {
           "action_type": "SEND_TEXT",
           "action_params": {
-            "text": "rasberry.getPostiOccupati()"
+            "text": "*Informazioni in tempo reale sull'affluenza*\n\n🔬 FUNZIONE IN SPERIMENTAZIONE, FUNZIONA SOLO CON ATTIVAZIONE DEI SENSORI",
+            "keyboard": [
+              [
+                "🔙 INDIETRO"
+              ]
+            ]
           }
         }
       ],
@@ -183,9 +310,133 @@
         ]
       }
     },
+    "6": {
+      "description": "Select Mensa",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "👍 Grazie per voler contribuire!\n\n📜 Da qua potrai mandare l'immagine aggiornate del menu di una mensa.\n\n*Scegli la mensa in cui ti trovi:*",
+            "keyboard_eval": "utility.makeArray2D(mensa.getMensaNames(),1)"
+          }
+        }
+      ],
+      "triggers": {
+        "text": [
+          {
+            "input": "*",
+            "validation": "__user_input__ in __previous_kb__",
+            "actions": [
+              {
+                "action_type": "SAVE_VAR",
+                "action_params": {
+                  "var_name": "mensa_name",
+                  "var_value_eval": "__user_input__"
+                }
+              },
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 61
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "61": {
+      "description": "Contribute",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text_eval": "'Inviami una foto aggiornata del menu della mensa {}'.format(__var[mensa_name]__)",
+            "keyboard": [
+              [
+                "🔙 INDIETRO"
+              ],
+              [
+                "🏠 HOME"
+              ]
+            ]
+          }
+        }
+      ],
+      "triggers": {
+        "photo": {
+          "actions": [
+            {
+              "action_type": "EXECUTE",
+              "action_params": {
+                "command": "mensa.setMenuImageId(__var[mensa_name]__, __photo__[-1]['file_id'], __user_info__)"
+              }
+            },
+            {
+              "action_type": "SEND_TEXT",
+              "action_params": {
+                "text": "Grazie per aver aggiornato il menu della mensa! 😊"
+              }
+            },
+            {
+              "action_type": "WAIT",
+              "action_params": {
+                "sleep_time": 1
+              }
+            },
+            {
+              "action_type": "RESTART"
+            }
+          ]
+        },
+        "document": {
+          "actions": [
+            {
+              "action_type": "SEND_TEXT",
+              "action_params": {
+                "text": "Mi hai mandato un file e non una foto."
+              }
+            }
+          ]
+        },
+        "text": [
+          {
+            "input": "🔙 INDIETRO",
+            "actions": [
+              {
+                "action_type": "CHANGE_STATE",
+                "action_params": {
+                  "new_state": 4
+                }
+              }
+            ]
+          },
+          {
+            "input": "🏠 HOME",
+            "actions": [
+              {
+                "action_type": "RESTART"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "9": {
-      "instructions": "📩 Non esitate a *contattarci*:\n\n 📝 Scrivi qua sotto qualsiasi feedback o consiglio",
-      "keyboard": [["🔙 INDIETRO"]],
+      "description": "Feedback",
+      "untriggered_actions": [
+        {
+          "action_type": "SEND_TEXT",
+          "action_params": {
+            "text": "📩 Non esitate a *contattarci*:\n\n 📝 Scrivi qua sotto qualsiasi feedback o consiglio",
+            "keyboard": [
+              [
+                "🔙 INDIETRO"
+              ]
+            ]
+          }
+        }
+      ],
       "triggers": {
         "text": [
           {
@@ -199,6 +450,12 @@
           {
             "input": "*",
             "actions": [
+              {
+                "action_type": "SEND_TEXT_ADMIN",
+                "action_params": {
+                  "text_eval": "'Message from {}:\\n{}'.format(__user_info__, __user_input__)"
+                }
+              },
               {
                 "action_type": "SEND_TEXT",
                 "action_params": {
